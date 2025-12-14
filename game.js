@@ -127,47 +127,83 @@ let unavailableSongs = new Set();
 // Track if ad is playing
 let isAdPlaying = false;
 let adCheckInterval = null;
+let lastKnownTime = 0;
+let stuckTimeCounter = 0;
 
 function checkForAd() {
   if (!player || !playerReady) return;
 
   try {
-    // Method 1: Check video data - ad videos have different properties
     const videoData = player.getVideoData();
-    const videoUrl = player.getVideoUrl();
     const currentVideoId = videoData?.video_id;
-
-    // If the current video ID doesn't match our song's ID, an ad might be playing
     const expectedId = gameState.currentSong?.id;
-    const adDetected =
-      expectedId && currentVideoId && currentVideoId !== expectedId;
-
-    // Method 2: Check if video duration is very different (ads are usually short)
+    const playerState = player.getPlayerState();
+    const currentTime = player.getCurrentTime();
     const duration = player.getDuration();
-    const isShortVideo = duration > 0 && duration < 60; // Most ads are under 60 seconds
+
+    // Debug logging - check console to see what data is available
+    console.log("Ad check:", {
+      currentVideoId,
+      expectedId,
+      playerState,
+      currentTime,
+      duration,
+      videoData,
+    });
 
     const audioStatus = document.getElementById("audio-status");
     const musicIcon = document.getElementById("music-icon");
 
-    if (
-      adDetected ||
-      (isShortVideo && player.getPlayerState() === YT.PlayerState.PLAYING)
+    // Method 1: Video ID mismatch (most reliable if YouTube exposes it)
+    const idMismatch =
+      expectedId && currentVideoId && currentVideoId !== expectedId;
+
+    // Method 2: Check if video appears to be playing but time isn't advancing on our video
+    // This can happen during ads
+    const isPlaying = playerState === YT.PlayerState.PLAYING;
+
+    // Method 3: Duration check - if duration is very short and video is playing
+    const suspiciouslyShort = duration > 0 && duration < 45 && isPlaying;
+
+    // Method 4: Check if getCurrentTime returns 0 while "playing" for too long
+    // During ads, getCurrentTime() often returns 0 or doesn't advance
+    if (isPlaying && currentTime === 0 && duration === 0) {
+      stuckTimeCounter++;
+    } else {
+      stuckTimeCounter = 0;
+    }
+    const stuckAtZero = stuckTimeCounter > 3; // Stuck for 3+ seconds
+
+    const adDetected = idMismatch || suspiciouslyShort || stuckAtZero;
+
+    if (adDetected && !isAdPlaying) {
+      isAdPlaying = true;
+      console.log("AD DETECTED!", {
+        idMismatch,
+        suspiciouslyShort,
+        stuckAtZero,
+      });
+      audioStatus.textContent = "📺 Ad playing - please wait...";
+      musicIcon.classList.remove("playing");
+      musicIcon.textContent = "📺";
+    } else if (
+      isAdPlaying &&
+      !adDetected &&
+      currentVideoId === expectedId &&
+      currentTime > 0
     ) {
-      if (!isAdPlaying) {
-        isAdPlaying = true;
-        audioStatus.textContent = "📺 Ad playing - please wait...";
-        musicIcon.classList.remove("playing");
-        musicIcon.textContent = "📺";
-      }
-    } else if (isAdPlaying && currentVideoId === expectedId) {
       // Ad finished, song is now playing
       isAdPlaying = false;
+      stuckTimeCounter = 0;
+      console.log("Ad finished, song playing");
       musicIcon.textContent = "🎵";
-      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+      if (isPlaying) {
         audioStatus.textContent = "Now playing...";
         musicIcon.classList.add("playing");
       }
     }
+
+    lastKnownTime = currentTime;
   } catch (e) {
     console.log("Ad check error:", e);
   }
@@ -295,12 +331,35 @@ function renumberPlayers() {
 }
 
 // Start Game
-function startGame() {
-  // Get player names
-  const playerInputs = document.querySelectorAll(".player-name");
+async function startGame() {
+  // Ensure songs are loaded
+  if (SONGS_DATABASE.length === 0) {
+    const startBtn = document.getElementById("start-game-btn");
+    startBtn.textContent = "Loading songs...";
+    startBtn.disabled = true;
+    await loadSongsDatabase();
+    startBtn.textContent = "Start Game";
+    startBtn.disabled = false;
+
+    if (SONGS_DATABASE.length === 0) {
+      alert("Failed to load songs database. Please refresh the page.");
+      return;
+    }
+  }
+
+  // Get player names - specifically from the players-list container
+  const playersList = document.getElementById("players-list");
+  const playerInputs = playersList.querySelectorAll(".player-name");
+  if (playerInputs.length === 0) {
+    console.error("No player inputs found!");
+    return;
+  }
   gameState.players = Array.from(playerInputs).map(
-    (input) => input.value.trim() || input.placeholder
+    (input) =>
+      (input.value ? input.value.trim() : "") || input.placeholder || "Player"
   );
+
+  console.log("Starting game with players:", gameState.players);
 
   // Get number of rounds
   gameState.totalRounds =
@@ -381,7 +440,7 @@ function updateCurrentPlayerTurn() {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
   if (gameState.currentPlayerIndex < gameState.players.length) {
-    container.innerHTML = `🎯 ${currentPlayer}'s turn to guess!`;
+    container.innerHTML = `${currentPlayer}'s turn to guess!`;
     document.getElementById("submit-guess-btn").disabled = false;
     document.getElementById("year-slider").disabled = false;
   } else {
@@ -613,26 +672,32 @@ function showFinalResults() {
 
 function resetGame() {
   // Reset to start screen
-  gameState = {
-    players: [],
-    currentRound: 0,
-    totalRounds: 5,
-    songs: [],
-    currentSong: null,
-    currentPlayerIndex: 0,
-    guesses: {},
-    scores: {},
-    phase: "setup",
-  };
+  gameState.players = [];
+  gameState.currentRound = 0;
+  gameState.totalRounds = 5;
+  gameState.songs = [];
+  gameState.currentSong = null;
+  gameState.currentPlayerIndex = 0;
+  gameState.guesses = {};
+  gameState.scores = {};
+  gameState.phase = "setup";
+
+  // Stop any ongoing ad detection
+  stopAdDetection();
 
   // Reset UI
   document.getElementById("rounds-input").value = 5;
-  document.getElementById("players-list").innerHTML = `
-        <div class="player-input">
-            <input type="text" placeholder="Player 1" class="player-name" value="Player 1">
-            <button class="remove-player" onclick="removePlayer(this)" disabled>×</button>
-        </div>
-    `;
+  const playersList = document.getElementById("players-list");
+  playersList.innerHTML =
+    '<div class="player-input">' +
+    '<input type="text" placeholder="Player 1" class="player-name" value="Player 1">' +
+    '<button class="remove-player" onclick="removePlayer(this)" disabled>×</button>' +
+    "</div>";
+
+  console.log(
+    "Game reset. Players list children:",
+    playersList.children.length
+  );
 
   showScreen("start");
 }

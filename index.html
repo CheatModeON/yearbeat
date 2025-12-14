@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YearBeat - Guess the Song Year!</title>
+    <meta
+      name="description"
+      content="A fun multiplayer game where you guess the release year of songs!"
+    />
+    <meta name="theme-color" content="#6366f1" />
+    <link rel="manifest" href="manifest.json" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Start Screen -->
+      <div id="start-screen" class="screen active">
+        <div class="logo">
+          <h1>🎵 YearBeat</h1>
+          <p class="tagline">Can you guess when the music dropped?</p>
+        </div>
+
+        <div class="setup-section">
+          <h2>Game Setup</h2>
+
+          <div class="input-group">
+            <label for="rounds-input">Number of Rounds</label>
+            <input type="number" id="rounds-input" min="1" max="20" value="5" />
+          </div>
+
+          <div class="players-section">
+            <h3>Players / Teams</h3>
+            <div id="players-list">
+              <div class="player-input">
+                <input
+                  type="text"
+                  placeholder="Player 1"
+                  class="player-name"
+                  value="Player 1"
+                />
+                <button
+                  class="remove-player"
+                  onclick="removePlayer(this)"
+                  disabled
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <button
+              id="add-player-btn"
+              class="btn btn-secondary"
+              onclick="addPlayer()"
+            >
+              + Add Player
+            </button>
+          </div>
+
+          <button
+            id="start-game-btn"
+            class="btn btn-primary btn-large"
+            onclick="startGame()"
+          >
+            Start Game 🎮
+          </button>
+        </div>
+      </div>
+
+      <!-- Game Screen -->
+      <div id="game-screen" class="screen">
+        <div class="game-header">
+          <div class="round-info">
+            <span id="round-display">Round 1/5</span>
+          </div>
+          <div class="scoreboard-mini" id="scoreboard-mini"></div>
+        </div>
+
+        <div class="video-container">
+          <div id="youtube-player"></div>
+          <div id="video-overlay" class="video-overlay hidden">
+            <span>🎵 Listen to the song...</span>
+          </div>
+        </div>
+
+        <div class="guess-section">
+          <div id="current-player-turn" class="current-player"></div>
+
+          <div class="year-slider-container">
+            <input
+              type="range"
+              id="year-slider"
+              min="1960"
+              max="2024"
+              value="1990"
+              class="year-slider"
+            />
+            <div class="year-display">
+              <span id="year-value">1990</span>
+            </div>
+            <div class="year-labels">
+              <span>1960</span>
+              <span>2024</span>
+            </div>
+          </div>
+
+          <button
+            id="submit-guess-btn"
+            class="btn btn-primary"
+            onclick="submitGuess()"
+          >
+            Lock In Guess 🔒
+          </button>
+        </div>
+
+        <div id="guesses-display" class="guesses-display"></div>
+      </div>
+
+      <!-- Results Screen (after each round) -->
+      <div id="results-screen" class="screen">
+        <div class="results-content">
+          <h2>🎯 Round Results</h2>
+          <div class="correct-year">
+            <span>The song was released in</span>
+            <span id="correct-year-display" class="year-big">1985</span>
+          </div>
+          <div id="song-info" class="song-info"></div>
+          <div id="round-results" class="round-results"></div>
+          <button
+            id="next-round-btn"
+            class="btn btn-primary btn-large"
+            onclick="nextRound()"
+          >
+            Next Round ➡️
+          </button>
+        </div>
+      </div>
+
+      <!-- Final Results Screen -->
+      <div id="final-screen" class="screen">
+        <div class="final-content">
+          <h2>🏆 Game Over!</h2>
+          <div id="winner-display" class="winner-display"></div>
+          <div id="final-scores" class="final-scores"></div>
+          <button class="btn btn-primary btn-large" onclick="resetGame()">
+            Play Again 🔄
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="songs.js"></script>
+    <script src="game.js"></script>
+    <script>
+      // YouTube IFrame API
+      var tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    </script>
+  </body>
+</html>

@@ -257,19 +257,88 @@ body {
 .video-container {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%;
+  height: 120px;
   background: var(--bg-card);
   border-radius: 20px;
   overflow: hidden;
   margin-bottom: 25px;
 }
 
-#youtube-player {
-  position: absolute;
-  top: 0;
-  left: 0;
+.audio-player-wrapper {
+  position: relative;
   width: 100%;
   height: 100%;
+}
+
+#youtube-player {
+  position: absolute;
+  top: -1000px;
+  left: 0;
+  width: 100%;
+  height: 400px;
+  pointer-events: none;
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  height: 100%;
+}
+
+.audio-visual {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.music-icon {
+  font-size: 3rem;
+  animation: pulse 1.5s ease infinite;
+}
+
+.music-icon.playing {
+  animation: bounce 0.5s ease infinite;
+}
+
+.audio-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.audio-status {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.audio-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.play-pause-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.play-pause-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5);
 }
 
 .video-overlay {

@@ -124,10 +124,84 @@ function skipUnavailableSong() {
 // Track unavailable songs
 let unavailableSongs = new Set();
 
+// Track if ad is playing
+let isAdPlaying = false;
+let adCheckInterval = null;
+
+function checkForAd() {
+  if (!player || !playerReady) return;
+
+  try {
+    // Method 1: Check video data - ad videos have different properties
+    const videoData = player.getVideoData();
+    const videoUrl = player.getVideoUrl();
+    const currentVideoId = videoData?.video_id;
+
+    // If the current video ID doesn't match our song's ID, an ad might be playing
+    const expectedId = gameState.currentSong?.id;
+    const adDetected =
+      expectedId && currentVideoId && currentVideoId !== expectedId;
+
+    // Method 2: Check if video duration is very different (ads are usually short)
+    const duration = player.getDuration();
+    const isShortVideo = duration > 0 && duration < 60; // Most ads are under 60 seconds
+
+    const audioStatus = document.getElementById("audio-status");
+    const musicIcon = document.getElementById("music-icon");
+
+    if (
+      adDetected ||
+      (isShortVideo && player.getPlayerState() === YT.PlayerState.PLAYING)
+    ) {
+      if (!isAdPlaying) {
+        isAdPlaying = true;
+        audioStatus.textContent = "📺 Ad playing - please wait...";
+        musicIcon.classList.remove("playing");
+        musicIcon.textContent = "📺";
+      }
+    } else if (isAdPlaying && currentVideoId === expectedId) {
+      // Ad finished, song is now playing
+      isAdPlaying = false;
+      musicIcon.textContent = "🎵";
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        audioStatus.textContent = "Now playing...";
+        musicIcon.classList.add("playing");
+      }
+    }
+  } catch (e) {
+    console.log("Ad check error:", e);
+  }
+}
+
+function startAdDetection() {
+  // Check for ads every second
+  if (adCheckInterval) clearInterval(adCheckInterval);
+  adCheckInterval = setInterval(checkForAd, 1000);
+}
+
+function stopAdDetection() {
+  if (adCheckInterval) {
+    clearInterval(adCheckInterval);
+    adCheckInterval = null;
+  }
+  isAdPlaying = false;
+}
+
 function onPlayerStateChange(event) {
   const playPauseBtn = document.getElementById("play-pause-btn");
   const musicIcon = document.getElementById("music-icon");
   const audioStatus = document.getElementById("audio-status");
+
+  // Check for ads when state changes (with slight delay to let YouTube update data)
+  setTimeout(checkForAd, 300);
+
+  // If ad is playing, still update UI but with ad message
+  if (isAdPlaying) {
+    if (event.data === YT.PlayerState.PLAYING) {
+      audioStatus.textContent = "📺 Ad playing - please wait...";
+    }
+    return;
+  }
 
   if (event.data === YT.PlayerState.PLAYING) {
     playPauseBtn.textContent = "⏸️";
@@ -141,8 +215,11 @@ function onPlayerStateChange(event) {
     playPauseBtn.textContent = "🔄";
     musicIcon.classList.remove("playing");
     audioStatus.textContent = "Song ended - replay?";
+    stopAdDetection();
   } else if (event.data === YT.PlayerState.BUFFERING) {
     audioStatus.textContent = "Loading...";
+    // Check for ad during buffering too (pre-roll ads)
+    setTimeout(checkForAd, 500);
   }
 }
 
@@ -270,14 +347,18 @@ function startRound() {
   document.getElementById("year-slider").value = 1990;
   document.getElementById("year-value").textContent = "1990";
 
-  // Reset audio controls
+  // Reset audio controls and ad detection
+  stopAdDetection();
   document.getElementById("play-pause-btn").textContent = "▶️";
+  document.getElementById("music-icon").textContent = "🎵";
   document.getElementById("music-icon").classList.remove("playing");
   document.getElementById("audio-status").textContent = "Ready to play";
 
-  // Load video
+  // Load video and start ad detection immediately
   if (playerReady && gameState.currentSong) {
     player.loadVideoById(gameState.currentSong.id);
+    // Start ad detection right away when video loads
+    startAdDetection();
   }
 
   showScreen("game");

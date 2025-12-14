@@ -17,6 +17,14 @@ let gameState = {
 let player;
 let playerReady = false;
 
+// Change rounds with custom buttons
+function changeRounds(delta) {
+  const input = document.getElementById("rounds-input");
+  let value = parseInt(input.value) + delta;
+  value = Math.min(Math.max(value, 1), 20); // Clamp between 1-20
+  input.value = value;
+}
+
 // DEBUG: Test functions for error handling
 // Call these from browser console to test:
 // testInvalidVideo() - loads an invalid video ID
@@ -232,7 +240,7 @@ async function startGame() {
     startBtn.textContent = "Loading songs...";
     startBtn.disabled = true;
     await loadSongsDatabase();
-    startBtn.textContent = "Start Game";
+    startBtn.textContent = "Start Game 🎮";
     startBtn.disabled = false;
 
     if (SONGS_DATABASE.length === 0) {

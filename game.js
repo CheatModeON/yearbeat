@@ -17,6 +17,41 @@ let gameState = {
 let player;
 let playerReady = false;
 
+// DEBUG: Test functions for error handling
+// Call these from browser console to test:
+// testInvalidVideo() - loads an invalid video ID
+// testUnavailableVideo() - loads a known unavailable video
+window.testInvalidVideo = function () {
+  if (player && playerReady) {
+    console.log("Testing with invalid video ID...");
+    gameState.currentSong = {
+      id: "INVALID_ID_123",
+      title: "Test Invalid",
+      artist: "Test",
+      year: 2000,
+    };
+    player.loadVideoById("INVALID_ID_123");
+  } else {
+    console.log("Player not ready. Start a game first.");
+  }
+};
+
+window.testUnavailableVideo = function () {
+  if (player && playerReady) {
+    console.log("Testing with potentially unavailable video...");
+    gameState.currentSong = {
+      id: "xxxxxxxxxxx",
+      title: "Test Unavailable",
+      artist: "Test",
+      year: 2000,
+    };
+    player.loadVideoById("xxxxxxxxxxx");
+  } else {
+    console.log("Player not ready. Start a game first.");
+  }
+};
+// TODO: remove the tests
+
 // YouTube API Callback
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("youtube-player", {
@@ -25,13 +60,15 @@ function onYouTubeIframeAPIReady() {
     videoId: "",
     playerVars: {
       playsinline: 1,
-      controls: 1,
+      controls: 0,
       rel: 0,
       modestbranding: 1,
+      disablekb: 1,
     },
     events: {
       onReady: onPlayerReady,
       onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
     },
   });
 }
@@ -41,8 +78,84 @@ function onPlayerReady(event) {
   console.log("YouTube Player Ready");
 }
 
+function onPlayerError(event) {
+  console.log("YouTube Player Error:", event.data);
+  // Error codes: 2 = invalid video ID, 5 = HTML5 error, 100 = not found, 101/150 = embedding not allowed
+  const audioStatus = document.getElementById("audio-status");
+  audioStatus.textContent = "Song unavailable, loading next...";
+
+  // Skip to a different song
+  skipUnavailableSong();
+}
+
+function skipUnavailableSong() {
+  // Mark current song as unavailable
+  const currentSongId = gameState.currentSong?.id;
+  if (currentSongId) {
+    unavailableSongs.add(currentSongId);
+  }
+
+  // Find a replacement song that hasn't been used and isn't unavailable
+  const usedSongIds = new Set(gameState.songs.map((s) => s.id));
+  const availableSongs = SONGS_DATABASE.filter(
+    (s) => !usedSongIds.has(s.id) && !unavailableSongs.has(s.id)
+  );
+
+  if (availableSongs.length > 0) {
+    // Pick a random replacement
+    const replacement =
+      availableSongs[Math.floor(Math.random() * availableSongs.length)];
+    gameState.currentSong = replacement;
+    gameState.songs[gameState.currentRound - 1] = replacement;
+
+    // Load the new video
+    if (playerReady) {
+      setTimeout(() => {
+        player.loadVideoById(replacement.id);
+      }, 1000);
+    }
+  } else {
+    // No more songs available, show error
+    document.getElementById("audio-status").textContent =
+      "No more songs available!";
+  }
+}
+
+// Track unavailable songs
+let unavailableSongs = new Set();
+
 function onPlayerStateChange(event) {
-  // Handle player state changes if needed
+  const playPauseBtn = document.getElementById("play-pause-btn");
+  const musicIcon = document.getElementById("music-icon");
+  const audioStatus = document.getElementById("audio-status");
+
+  if (event.data === YT.PlayerState.PLAYING) {
+    playPauseBtn.textContent = "⏸️";
+    musicIcon.classList.add("playing");
+    audioStatus.textContent = "Now playing...";
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    playPauseBtn.textContent = "▶️";
+    musicIcon.classList.remove("playing");
+    audioStatus.textContent = "Paused";
+  } else if (event.data === YT.PlayerState.ENDED) {
+    playPauseBtn.textContent = "🔄";
+    musicIcon.classList.remove("playing");
+    audioStatus.textContent = "Song ended - replay?";
+  } else if (event.data === YT.PlayerState.BUFFERING) {
+    audioStatus.textContent = "Loading...";
+  }
+}
+
+// Toggle play/pause
+function togglePlayPause() {
+  if (!player || !playerReady) return;
+
+  const state = player.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) {
+    player.pauseVideo();
+  } else {
+    player.playVideo();
+  }
 }
 
 // DOM Elements
@@ -123,6 +236,9 @@ function startGame() {
     gameState.scores[player] = 0;
   });
 
+  // Reset unavailable songs tracker
+  unavailableSongs = new Set();
+
   // Get random songs
   gameState.songs = getRandomSongs(gameState.totalRounds);
 
@@ -153,6 +269,11 @@ function startRound() {
   // Reset year slider
   document.getElementById("year-slider").value = 1990;
   document.getElementById("year-value").textContent = "1990";
+
+  // Reset audio controls
+  document.getElementById("play-pause-btn").textContent = "▶️";
+  document.getElementById("music-icon").classList.remove("playing");
+  document.getElementById("audio-status").textContent = "Ready to play";
 
   // Load video
   if (playerReady && gameState.currentSong) {

@@ -94,12 +94,12 @@ body {
   margin-bottom: 25px;
 }
 
-.input-group label {
+/* .input-group label {
   display: block;
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 8px;
-}
+} */
 
 .input-group input {
   width: 100%;
@@ -118,14 +118,89 @@ body {
   border-color: var(--primary);
 }
 
+/* Custom Rounds Selector */
+.rounds-selector {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+}
+
+.rounds-selector input {
+  /* width: 80px; */
+  height: 50px;
+  text-align: center;
+  /* font-size: 1.5rem; */
+  font-weight: 700;
+  padding: 10px 8px;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  -moz-appearance: textfield;
+  pointer-events: none;
+}
+
+.rounds-selector input::-webkit-outer-spin-button,
+.rounds-selector input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.rounds-btn {
+  width: 50px;
+  /* min-width: 50px; */
+  height: 50px;
+  border: 2px solid var(--bg-card-light);
+  background: linear-gradient(
+    135deg,
+    var(--bg-card) 0%,
+    var(--bg-card-light) 100%
+  );
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rounds-btn:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.rounds-btn:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.rounds-btn:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.rounds-btn:active {
+  transform: scale(0.95);
+}
+
 .players-section {
   margin-bottom: 30px;
 }
 
-.players-section h3 {
+/* .players-section h3,
+.input-group h3 {
   font-size: 1rem;
   color: var(--text-secondary);
   margin-bottom: 15px;
+} */
+
+.players-section span,
+.input-group span {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
 }
 
 #players-list {
@@ -670,4 +745,13 @@ body {
 
 .pulse {
   animation: pulse 1.5s ease infinite;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 40px;
 }

@@ -128,11 +128,16 @@ function onPlayerStateChange(event) {
   const playPauseBtn = document.getElementById("play-pause-btn");
   const musicIcon = document.getElementById("music-icon");
   const audioStatus = document.getElementById("audio-status");
+  const submitBtn = document.getElementById("submit-guess-btn");
 
   if (event.data === YT.PlayerState.PLAYING) {
     playPauseBtn.textContent = "⏸️";
     musicIcon.classList.add("playing");
     audioStatus.textContent = "Now playing...";
+    // Enable guess button when song is playing
+    if (gameState.currentPlayerIndex < gameState.players.length) {
+      submitBtn.disabled = false;
+    }
   } else if (event.data === YT.PlayerState.PAUSED) {
     playPauseBtn.textContent = "▶️";
     musicIcon.classList.remove("playing");
@@ -143,6 +148,8 @@ function onPlayerStateChange(event) {
     audioStatus.textContent = "Song ended - replay?";
   } else if (event.data === YT.PlayerState.BUFFERING) {
     audioStatus.textContent = "Loading...";
+    // Disable guess button while loading/buffering
+    submitBtn.disabled = true;
   }
 }
 
@@ -298,6 +305,9 @@ function startRound() {
   document.getElementById("music-icon").textContent = "🎵";
   document.getElementById("music-icon").classList.remove("playing");
   document.getElementById("audio-status").textContent = "Ready to play";
+
+  // Disable guess button until song starts playing
+  document.getElementById("submit-guess-btn").disabled = true;
 
   // Load video
   if (playerReady && gameState.currentSong) {

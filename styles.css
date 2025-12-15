@@ -180,7 +180,11 @@ body {
 
 @media (hover: hover) {
   .rounds-btn:hover {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--secondary) 100%
+    );
     border-color: var(--primary);
     transform: scale(1.05);
   }
@@ -221,10 +225,13 @@ body {
 .player-input {
   display: flex;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .player-input input {
   flex: 1;
+  min-width: 0;
   padding: 12px 15px;
   border: 2px solid var(--bg-card-light);
   border-radius: 10px;

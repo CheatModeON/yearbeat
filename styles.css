@@ -148,8 +148,10 @@ body {
 
 .rounds-btn {
   width: 50px;
-  /* min-width: 50px; */
+  min-width: 50px;
   height: 50px;
+  min-height: 50px;
+  flex-shrink: 0;
   border: 2px solid var(--bg-card-light);
   background: linear-gradient(
     135deg,
@@ -160,10 +162,12 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .rounds-btn:first-child {
@@ -174,13 +178,17 @@ body {
   border-radius: 0 12px 12px 0;
 }
 
-.rounds-btn:hover {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  border-color: var(--primary);
-  transform: scale(1.05);
+@media (hover: hover) {
+  .rounds-btn:hover {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border-color: var(--primary);
+    transform: scale(1.05);
+  }
 }
 
 .rounds-btn:active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-color: var(--primary);
   transform: scale(0.95);
 }
 
@@ -234,14 +242,18 @@ body {
 
 .remove-player {
   width: 44px;
+  min-width: 44px;
   height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   border: none;
   border-radius: 10px;
   background: var(--danger);
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  transition: opacity 0.3s;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .remove-player:disabled {
@@ -251,6 +263,11 @@ body {
 
 .remove-player:not(:disabled):hover {
   opacity: 0.8;
+}
+
+.remove-player:not(:disabled):active {
+  transform: scale(0.95);
+  opacity: 0.9;
 }
 
 /* Buttons */

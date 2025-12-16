@@ -305,8 +305,8 @@ function startRound() {
   updateGuessesDisplay();
 
   // Reset year slider
-  document.getElementById("year-slider").value = 1990;
-  document.getElementById("year-value").textContent = "1990";
+  document.getElementById("year-slider").value = 1975;
+  document.getElementById("year-value").textContent = "1975";
 
   // Reset audio controls
   document.getElementById("play-pause-btn").textContent = "▶️";
@@ -404,8 +404,8 @@ function submitGuess() {
     }, 1000);
   } else {
     // Reset slider for next player
-    document.getElementById("year-slider").value = 1990;
-    document.getElementById("year-value").textContent = "1990";
+    document.getElementById("year-slider").value = 1975;
+    document.getElementById("year-value").textContent = "1975";
   }
 }
 

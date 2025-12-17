@@ -11,11 +11,25 @@ let gameState = {
   guesses: {},
   scores: {},
   phase: "setup", // setup, playing, guessing, results, final
+  musicSource: "youtube", // 'youtube' or 'spotify'
 };
 
 // YouTube Player
 let player;
 let playerReady = false;
+
+// Spotify Player state
+let spotifyPlaying = false;
+let spotifyController = null;
+let spotifyIFrameAPI = null;
+let spotifyReady = false;
+
+// Spotify IFrame API Callback
+window.onSpotifyIframeApiReady = (IFrameAPI) => {
+  spotifyIFrameAPI = IFrameAPI;
+  spotifyReady = true;
+  console.log("Spotify IFrame API Ready");
+};
 
 // Change rounds with custom buttons
 function changeRounds(delta) {
@@ -105,7 +119,8 @@ function skipUnavailableSong() {
 
   // Find a replacement song that hasn't been used and isn't unavailable
   const usedSongIds = new Set(gameState.songs.map((s) => s.id));
-  const availableSongs = SONGS_DATABASE.filter(
+  const database = getCurrentSongsDatabase();
+  const availableSongs = database.filter(
     (s) => !usedSongIds.has(s.id) && !unavailableSongs.has(s.id)
   );
 
@@ -116,8 +131,12 @@ function skipUnavailableSong() {
     gameState.currentSong = replacement;
     gameState.songs[gameState.currentRound - 1] = replacement;
 
-    // Load the new video
-    if (playerReady) {
+    // Load the new video/track
+    if (gameState.musicSource === "spotify") {
+      setTimeout(() => {
+        loadSpotifyTrack(replacement.id);
+      }, 1000);
+    } else if (playerReady) {
       setTimeout(() => {
         player.loadVideoById(replacement.id);
       }, 1000);
@@ -163,6 +182,11 @@ function onPlayerStateChange(event) {
 
 // Toggle play/pause
 function togglePlayPause() {
+  if (gameState.musicSource === "spotify") {
+    toggleSpotifyPlayPause();
+    return;
+  }
+
   if (!player || !playerReady) return;
 
   const state = player.getPlayerState();
@@ -170,6 +194,150 @@ function togglePlayPause() {
     player.pauseVideo();
   } else {
     player.playVideo();
+  }
+}
+
+// Spotify play/pause toggle
+function toggleSpotifyPlayPause() {
+  const playPauseBtn = document.getElementById("play-pause-btn");
+  const musicIcon = document.getElementById("music-icon");
+  const audioStatus = document.getElementById("audio-status");
+  const submitBtn = document.getElementById("submit-guess-btn");
+
+  if (!spotifyController) {
+    console.log("Spotify controller not ready");
+    return;
+  }
+
+  if (spotifyPlaying) {
+    spotifyController.pause();
+    playPauseBtn.textContent = "▶️";
+    musicIcon.classList.remove("playing");
+    audioStatus.textContent = "Paused";
+    spotifyPlaying = false;
+  } else {
+    spotifyController.resume();
+    playPauseBtn.textContent = "⏸️";
+    musicIcon.classList.add("playing");
+    audioStatus.textContent = "Now playing...";
+    spotifyPlaying = true;
+    // Enable guess button
+    if (gameState.currentPlayerIndex < gameState.players.length) {
+      submitBtn.disabled = false;
+    }
+  }
+}
+
+// Load Spotify track using IFrame API
+function loadSpotifyTrack(trackId) {
+  const spotifyPlayer = document.getElementById("spotify-player");
+  const audioStatus = document.getElementById("audio-status");
+  const playPauseBtn = document.getElementById("play-pause-btn");
+  const musicIcon = document.getElementById("music-icon");
+  const submitBtn = document.getElementById("submit-guess-btn");
+
+  console.log("Loading Spotify track:", trackId);
+
+  if (!spotifyPlayer) {
+    console.error("Spotify player element not found!");
+    return;
+  }
+
+  if (!spotifyIFrameAPI) {
+    console.error("Spotify IFrame API not loaded yet");
+    audioStatus.textContent = "Loading Spotify...";
+    // Retry after a delay
+    setTimeout(() => loadSpotifyTrack(trackId), 1000);
+    return;
+  }
+
+  // Reset state
+  spotifyPlaying = false;
+  playPauseBtn.textContent = "▶️";
+  musicIcon.classList.remove("playing");
+  audioStatus.textContent = "Loading...";
+
+  // Destroy existing controller if any
+  if (spotifyController) {
+    try {
+      spotifyController.destroy();
+    } catch (e) {
+      console.log("Error destroying controller:", e);
+    }
+    spotifyController = null;
+  }
+
+  // Recreate the embed div (it gets replaced by the API)
+  spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
+  const spotifyEmbed = document.getElementById("spotify-embed");
+
+  // Create new controller
+  const options = {
+    uri: `spotify:track:${trackId}`,
+    width: "100%",
+    height: 152,
+    theme: 0,
+  };
+
+  const callback = (controller) => {
+    spotifyController = controller;
+    console.log("Spotify controller created");
+
+    // Add event listeners
+    controller.addListener("playback_update", (e) => {
+      if (e.data.isPaused) {
+        playPauseBtn.textContent = "▶️";
+        musicIcon.classList.remove("playing");
+        audioStatus.textContent = "Paused";
+        spotifyPlaying = false;
+      } else {
+        playPauseBtn.textContent = "⏸️";
+        musicIcon.classList.add("playing");
+        audioStatus.textContent = "Now playing...";
+        spotifyPlaying = true;
+        // Enable guess button when playing
+        if (gameState.currentPlayerIndex < gameState.players.length) {
+          submitBtn.disabled = false;
+        }
+      }
+    });
+
+    controller.addListener("ready", () => {
+      console.log("Spotify embed ready, starting playback...");
+      audioStatus.textContent = "Starting...";
+      // Auto-play after a short delay
+      setTimeout(() => {
+        controller.play();
+      }, 500);
+    });
+  };
+
+  spotifyIFrameAPI.createController(spotifyEmbed, options, callback);
+}
+
+// Show/hide players based on music source
+function updatePlayerVisibility() {
+  const youtubePlayer = document.getElementById("youtube-player");
+  const spotifyPlayer = document.getElementById("spotify-player");
+  const audioControls = document.querySelector(".audio-controls");
+
+  console.log("Updating player visibility for:", gameState.musicSource);
+
+  if (gameState.musicSource === "spotify") {
+    // Hide YouTube, show Spotify (but Spotify is positioned off-screen)
+    youtubePlayer.classList.add("hidden");
+    spotifyPlayer.classList.remove("hidden");
+    // Show custom audio controls for Spotify too
+    if (audioControls) {
+      audioControls.style.display = "flex";
+    }
+  } else {
+    // Show YouTube, hide Spotify
+    youtubePlayer.classList.remove("hidden");
+    spotifyPlayer.classList.add("hidden");
+    if (audioControls) {
+      audioControls.style.display = "flex";
+    }
   }
 }
 
@@ -234,19 +402,32 @@ function renumberPlayers() {
 
 // Start Game
 async function startGame() {
-  // Ensure songs are loaded
-  if (SONGS_DATABASE.length === 0) {
-    const startBtn = document.getElementById("start-game-btn");
-    startBtn.textContent = "Loading songs...";
-    startBtn.disabled = true;
-    await loadSongsDatabase();
-    startBtn.textContent = "Start Game 🎮";
-    startBtn.disabled = false;
+  // Store selected music source
+  gameState.musicSource = currentMusicSource;
+  console.log("Starting game with music source:", gameState.musicSource);
 
+  // Ensure songs are loaded based on source
+  if (gameState.musicSource === "youtube") {
     if (SONGS_DATABASE.length === 0) {
-      alert("Failed to load songs database. Please refresh the page.");
-      return;
+      const startBtn = document.getElementById("start-game-btn");
+      startBtn.textContent = "Loading songs...";
+      startBtn.disabled = true;
+      await loadSongsDatabase();
+      startBtn.textContent = "Start Game 🎮";
+      startBtn.disabled = false;
+
+      if (SONGS_DATABASE.length === 0) {
+        alert("Failed to load songs database. Please refresh the page.");
+        return;
+      }
     }
+  } else {
+    // Spotify
+    if (SPOTIFY_SONGS_DATABASE.length === 0) {
+      console.log("Loading Spotify songs database...");
+      await loadSpotifySongsDatabase();
+    }
+    console.log("Spotify songs available:", SPOTIFY_SONGS_DATABASE.length);
   }
 
   // Get player names - specifically from the players-list container
@@ -305,8 +486,8 @@ function startRound() {
   updateGuessesDisplay();
 
   // Reset year slider
-  document.getElementById("year-slider").value = 1975;
-  document.getElementById("year-value").textContent = "1975";
+  document.getElementById("year-slider").value = 1990;
+  document.getElementById("year-value").textContent = "1990";
 
   // Reset audio controls
   document.getElementById("play-pause-btn").textContent = "▶️";
@@ -317,9 +498,19 @@ function startRound() {
   // Disable guess button until song starts playing
   document.getElementById("submit-guess-btn").disabled = true;
 
-  // Load video
-  if (playerReady && gameState.currentSong) {
-    player.loadVideoById(gameState.currentSong.id);
+  // Update player visibility based on music source
+  updatePlayerVisibility();
+
+  // Load video/track based on music source
+  if (gameState.musicSource === "spotify") {
+    if (gameState.currentSong) {
+      loadSpotifyTrack(gameState.currentSong.id);
+    }
+  } else {
+    // YouTube
+    if (playerReady && gameState.currentSong) {
+      player.loadVideoById(gameState.currentSong.id);
+    }
   }
 
   showScreen("game");
@@ -404,8 +595,8 @@ function submitGuess() {
     }, 1000);
   } else {
     // Reset slider for next player
-    document.getElementById("year-slider").value = 1975;
-    document.getElementById("year-value").textContent = "1975";
+    document.getElementById("year-slider").value = 1990;
+    document.getElementById("year-value").textContent = "1990";
   }
 }
 
@@ -502,8 +693,14 @@ function showRoundResults() {
     nextBtn.textContent = "Next Round ➡️";
   }
 
-  // Stop video
-  if (player && player.pauseVideo) {
+  // Stop video/audio
+  if (gameState.musicSource === "spotify") {
+    // Pause Spotify playback
+    if (spotifyController) {
+      spotifyController.pause();
+    }
+    spotifyPlaying = false;
+  } else if (player && player.pauseVideo) {
     player.pauseVideo();
   }
 
@@ -583,6 +780,33 @@ function resetGame() {
   gameState.guesses = {};
   gameState.scores = {};
   gameState.phase = "setup";
+  gameState.musicSource = "youtube";
+
+  // Reset music source to YouTube
+  currentMusicSource = "youtube";
+  document.querySelectorAll(".source-btn").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  const youtubeBtn = document.querySelector('[data-source="youtube"]');
+  if (youtubeBtn) {
+    youtubeBtn.classList.add("active");
+  }
+
+  // Clear Spotify
+  if (spotifyController) {
+    try {
+      spotifyController.destroy();
+    } catch (e) {
+      console.log("Error destroying Spotify controller:", e);
+    }
+    spotifyController = null;
+  }
+  // Recreate the embed div for next game
+  const spotifyPlayer = document.getElementById("spotify-player");
+  if (spotifyPlayer) {
+    spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
+  }
+  spotifyPlaying = false;
 
   // Reset UI
   document.getElementById("rounds-input").value = 5;

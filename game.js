@@ -31,6 +31,11 @@ window.onSpotifyIframeApiReady = (IFrameAPI) => {
   console.log("Spotify IFrame API Ready");
 };
 
+// Mobile detection helper
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 // Change rounds with custom buttons
 function changeRounds(delta) {
   const input = document.getElementById("rounds-input");
@@ -257,15 +262,18 @@ function loadSpotifyTrack(trackId) {
   musicIcon.classList.remove("playing");
   audioStatus.textContent = "Loading...";
 
-  // If controller already exists, reuse it (critical for mobile autoplay)
+  // If controller already exists, reuse it
   if (spotifyController) {
-    console.log("Reusing existing Spotify controller for mobile compatibility");
-    // Use the play option to ensure it starts playing after loading
+    console.log("Reusing existing Spotify controller");
     spotifyController.loadUri(`spotify:track:${trackId}`);
-    // Must call resume() after loadUri to ensure playback starts (fixes mobile pause issue)
-    setTimeout(() => {
-      spotifyController.resume();
-    }, 100);
+    // On mobile, user must tap play manually due to browser autoplay restrictions
+    if (isMobileDevice()) {
+      audioStatus.textContent = "Press play to start";
+    } else {
+      setTimeout(() => {
+        spotifyController.resume();
+      }, 100);
+    }
     return;
   }
 
@@ -280,8 +288,6 @@ function loadSpotifyTrack(trackId) {
     width: "100%",
     height: 152,
     theme: 0,
-    // Try to enable autoplay
-    autoplay: true,
   };
 
   const callback = (controller) => {
@@ -308,12 +314,16 @@ function loadSpotifyTrack(trackId) {
     });
 
     controller.addListener("ready", () => {
-      console.log("Spotify embed ready, starting playback...");
-      audioStatus.textContent = "Starting...";
-      // Auto-play after a short delay
-      setTimeout(() => {
-        controller.play();
-      }, 500);
+      console.log("Spotify embed ready");
+      // On mobile, user must tap play manually due to browser autoplay restrictions
+      if (isMobileDevice()) {
+        audioStatus.textContent = "Press play to start";
+      } else {
+        audioStatus.textContent = "Starting...";
+        setTimeout(() => {
+          controller.play();
+        }, 500);
+      }
     });
   };
 

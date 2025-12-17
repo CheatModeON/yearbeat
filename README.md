@@ -1,11 +1,11 @@
 # YearBeat 🎵
 
-A fun multiplayer web game where players listen to songs from YouTube and try to guess the year they were released!
+A fun multiplayer web game where players listen to songs and try to guess the year they were released! Choose between YouTube or Spotify as your music source.
 
 ## How to Play
 
-1. **Setup**: Add players/teams and set the number of rounds
-2. **Listen**: A random song plays from YouTube (audio only - no video hints!)
+1. **Setup**: Add players/teams, choose music source (YouTube or Spotify), and set the number of rounds
+2. **Listen**: A random song plays (audio only - no hints!)
 3. **Guess**: Each player uses the slider to guess the release year
 4. **Score**: Points are awarded based on how close you are:
    - **Perfect (exact year)**: 15 points 🎯
@@ -39,39 +39,59 @@ If you have the Live Server extension, right-click on `index.html` and select "O
 
 ### Option 4: Direct File (Limited)
 
-You can open `index.html` directly in your browser, but some browsers may block YouTube embeds due to CORS restrictions.
+You can open `index.html` directly in your browser, but some browsers may block embeds due to CORS restrictions.
 
 ## Features
 
 - 🎮 **1-8 Players**: Perfect for parties or solo play
-- 🎵 **22,800+ Songs**: Massive library spanning 1920s to 2020s
+- 🎵 **70,000+ Songs**: Massive combined library spanning 1920s to 2020s
 - 🎧 **Audio-Only Mode**: No video hints - pure listening challenge
+- 🎤 **Dual Music Sources**: Choose between YouTube or Spotify
 - 📱 **Responsive**: Works on desktop and mobile
 - 🏆 **Score Tracking**: Competitive leaderboard
 - 🎨 **Modern UI**: Beautiful dark theme with animations
-- ⏭️ **Smart Skip**: Automatically skips unavailable videos
+- ⏭️ **Smart Skip**: Automatically skips unavailable tracks
 
-## Song Library
+## Song Libraries
 
-The game includes **22,840 songs** from various genres and decades:
+### YouTube Library (22,840 songs)
 
-| Decade      | Songs |
-| ----------- | ----- |
-| 1920s-1950s | 33    |
-| 1960s       | 229   |
-| 1970s       | 433   |
-| 1980s       | 1,262 |
-| 1990s       | 2,942 |
-| 2000s       | 4,580 |
-| 2010s       | 9,463 |
-| 2020s       | 3,898 |
+| Decade      | Songs | %     |
+| ----------- | ----- | ----- |
+| 1920s-1950s | 33    | 0.1%  |
+| 1960s       | 229   | 1.0%  |
+| 1970s       | 433   | 1.9%  |
+| 1980s       | 1,262 | 5.5%  |
+| 1990s       | 2,942 | 12.9% |
+| 2000s       | 4,580 | 20.1% |
+| 2010s       | 9,463 | 41.4% |
+| 2020s       | 3,898 | 17.1% |
+
+### Spotify Library (47,868 songs)
+
+| Decade | Songs  | %     |
+| ------ | ------ | ----- |
+| 1950s  | 151    | 0.3%  |
+| 1960s  | 614    | 1.3%  |
+| 1970s  | 1,238  | 2.6%  |
+| 1980s  | 1,802  | 3.8%  |
+| 1990s  | 4,960  | 10.4% |
+| 2000s  | 13,173 | 27.5% |
+| 2010s  | 11,889 | 24.8% |
+| 2020s  | 14,041 | 29.3% |
+
+## Data Sources
+
+- YouTube songs: [akbargherbal/youtube-music-hits](https://huggingface.co/datasets/akbargherbal/youtube-music-hits)
+- Spotify songs: [fjcloud/spotify_popular_tracks](https://huggingface.co/datasets/fjcloud/spotify_popular_tracks)
 
 ## Technical Details
 
 - Pure HTML, CSS, and JavaScript (no frameworks)
-- YouTube IFrame API for audio playback
-- Audio-only mode (video hidden) to prevent visual hints
-- Automatic handling of unavailable videos
+- YouTube IFrame API for YouTube playback
+- Spotify IFrame API for Spotify playback with autoplay
+- Audio-only mode (players hidden) to prevent visual hints
+- Automatic handling of unavailable tracks
 - PWA-ready with manifest.json
 
 ## License

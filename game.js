@@ -260,8 +260,12 @@ function loadSpotifyTrack(trackId) {
   // If controller already exists, reuse it (critical for mobile autoplay)
   if (spotifyController) {
     console.log("Reusing existing Spotify controller for mobile compatibility");
+    // Use the play option to ensure it starts playing after loading
     spotifyController.loadUri(`spotify:track:${trackId}`);
-    // The playback_update listener will handle auto-play state
+    // Must call resume() after loadUri to ensure playback starts (fixes mobile pause issue)
+    setTimeout(() => {
+      spotifyController.resume();
+    }, 100);
     return;
   }
 
@@ -270,12 +274,14 @@ function loadSpotifyTrack(trackId) {
   spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
   const spotifyEmbed = document.getElementById("spotify-embed");
 
-  // Create new controller
+  // Create new controller with autoplay enabled
   const options = {
     uri: `spotify:track:${trackId}`,
     width: "100%",
     height: 152,
     theme: 0,
+    // Try to enable autoplay
+    autoplay: true,
   };
 
   const callback = (controller) => {

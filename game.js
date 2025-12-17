@@ -33,7 +33,9 @@ window.onSpotifyIframeApiReady = (IFrameAPI) => {
 
 // Mobile detection helper
 function isMobileDevice() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
 }
 
 // Change rounds with custom buttons
@@ -501,8 +503,8 @@ function startRound() {
   updateGuessesDisplay();
 
   // Reset year slider
-  document.getElementById("year-slider").value = 1990;
-  document.getElementById("year-value").textContent = "1990";
+  document.getElementById("year-slider").value = 1975;
+  document.getElementById("year-value").textContent = "1975";
 
   // Reset audio controls
   document.getElementById("play-pause-btn").textContent = "▶️";
@@ -610,8 +612,8 @@ function submitGuess() {
     }, 1000);
   } else {
     // Reset slider for next player
-    document.getElementById("year-slider").value = 1990;
-    document.getElementById("year-value").textContent = "1990";
+    document.getElementById("year-slider").value = 1975;
+    document.getElementById("year-value").textContent = "1975";
   }
 }
 
@@ -839,6 +841,34 @@ function resetGame() {
 
   showScreen("start");
 }
+
+// Info Modal Functions
+function showInfoModal() {
+  const modal = document.getElementById("info-modal");
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden"; // Prevent scrolling
+}
+
+function closeInfoModal() {
+  const modal = document.getElementById("info-modal");
+  modal.classList.remove("active");
+  document.body.style.overflow = ""; // Restore scrolling
+}
+
+// Close modal when clicking outside
+document.addEventListener("click", (e) => {
+  const modal = document.getElementById("info-modal");
+  if (e.target === modal) {
+    closeInfoModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeInfoModal();
+  }
+});
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {

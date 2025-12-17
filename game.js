@@ -252,20 +252,18 @@ function loadSpotifyTrack(trackId) {
   }
 
   // Reset UI state
+  spotifyPlaying = false;
   playPauseBtn.textContent = "▶️";
   musicIcon.classList.remove("playing");
-  audioStatus.textContent = "Loading...";
 
   // If controller exists, try to reuse it with loadUri (better for mobile)
   if (spotifyController) {
     console.log("Reusing existing Spotify controller");
-    spotifyPlaying = false;
+    audioStatus.textContent = "Tap ▶️ to play";
     try {
       spotifyController.loadUri(`spotify:track:${trackId}`);
-      // Auto-play after a short delay
-      setTimeout(() => {
-        spotifyController.play();
-      }, 500);
+      // Don't auto-play on mobile - user must tap play button
+      // Enable the guess button since track is loaded
       return;
     } catch (e) {
       console.log("Error reusing controller, will recreate:", e);
@@ -279,8 +277,8 @@ function loadSpotifyTrack(trackId) {
     }
   }
 
-  // Reset state
-  spotifyPlaying = false;
+  // Creating new controller - this happens on first track with user interaction
+  audioStatus.textContent = "Loading...";
 
   // Recreate the embed div (it gets replaced by the API)
   spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
@@ -303,7 +301,13 @@ function loadSpotifyTrack(trackId) {
       if (e.data.isPaused) {
         playPauseBtn.textContent = "▶️";
         musicIcon.classList.remove("playing");
-        audioStatus.textContent = "Paused";
+        if (spotifyPlaying) {
+          // Was playing, now paused
+          audioStatus.textContent = "Paused";
+        } else {
+          // Never started playing
+          audioStatus.textContent = "Tap ▶️ to play";
+        }
         spotifyPlaying = false;
       } else {
         playPauseBtn.textContent = "⏸️";
@@ -318,12 +322,12 @@ function loadSpotifyTrack(trackId) {
     });
 
     controller.addListener("ready", () => {
-      console.log("Spotify embed ready, starting playback...");
-      audioStatus.textContent = "Starting...";
-      // Auto-play after a short delay
+      console.log("Spotify embed ready");
+      audioStatus.textContent = "Tap ▶️ to play";
+      // Try to auto-play (works on first track due to user interaction from clicking Start Game)
       setTimeout(() => {
         controller.play();
-      }, 500);
+      }, 300);
     });
   };
 

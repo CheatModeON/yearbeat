@@ -998,7 +998,6 @@ body {
 @media (max-width: 768px) {
   .modal-content {
     padding: 30px 20px;
-    margin: 20px;
   }
 
   .modal-content h2 {

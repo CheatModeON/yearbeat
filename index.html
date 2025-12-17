@@ -26,6 +26,9 @@
     <div class="container">
       <!-- Start Screen -->
       <div id="start-screen" class="screen active">
+        <button class="info-btn" onclick="showInfoModal()" title="How to Play">
+          <span>ℹ️</span>
+        </button>
         <div class="logo">
           <h1>🎵 YearBeat</h1>
           <p class="tagline">Can you guess when the music dropped?</p>
@@ -160,15 +163,15 @@
               id="year-slider"
               min="1960"
               max="2024"
-              value="1990"
+              value="1975"
               class="year-slider"
             />
             <div class="year-display">
-              <span id="year-value">1990</span>
+              <span id="year-value">1975</span>
             </div>
             <div class="year-labels">
-              <span>1960</span>
-              <span>2024</span>
+              <span>1925</span>
+              <span>2025</span>
             </div>
           </div>
 
@@ -213,6 +216,63 @@
           <button class="btn btn-primary btn-large" onclick="resetGame()">
             Play Again 🔄
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeInfoModal()">×</button>
+        <h2>How to Play YearBeat</h2>
+        <div class="info-content">
+          <div class="info-section">
+            <h3>🎯 Objective</h3>
+            <p>
+              Guess the release year of songs as accurately as possible to earn
+              points!
+            </p>
+          </div>
+
+          <div class="info-section">
+            <h3>🎮 Setup</h3>
+            <ul>
+              <li>
+                <strong>Music Source:</strong> Choose between YouTube or Spotify
+              </li>
+              <li>
+                <strong>Rounds:</strong> Select how many songs to play (1-20)
+              </li>
+              <li><strong>Players:</strong> Add player names or team names</li>
+            </ul>
+          </div>
+
+          <div class="info-section">
+            <h3>📖 How to Play</h3>
+            <ol>
+              <li>Listen to the song carefully</li>
+              <li>
+                Use the slider to select the year you think it was released
+              </li>
+              <li>Lock in your guess before time runs out</li>
+              <li>
+                Earn points based on how close you are to the actual year!
+              </li>
+            </ol>
+          </div>
+
+          <div class="info-section">
+            <h3>🏆 Scoring</h3>
+            <ul>
+              <li><strong>Perfect Guess:</strong> 15 points</li>
+              <li><strong>Within 1 year:</strong> 10 points</li>
+              <li><strong>Within 3 year:</strong> 7 points</li>
+              <li><strong>Within 5 years:</strong> 5 points</li>
+              <li><strong>Within 10 years:</strong> 3 points</li>
+              <li><strong>Within 20 years:</strong> 1 point</li>
+              <li><strong>More than 20 years:</strong> 0 points</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

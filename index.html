@@ -35,6 +35,28 @@
           <h2>Game Setup</h2>
 
           <div class="input-group">
+            <span>Music Source</span>
+            <div class="source-selector">
+              <button
+                class="source-btn active"
+                data-source="youtube"
+                onclick="selectMusicSource('youtube')"
+              >
+                <span class="source-icon">▶️</span>
+                <span class="source-name">YouTube</span>
+              </button>
+              <button
+                class="source-btn"
+                data-source="spotify"
+                onclick="selectMusicSource('spotify')"
+              >
+                <span class="source-icon">🎧</span>
+                <span class="source-name">Spotify</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="input-group">
             <span>Number of Rounds</span>
             <div class="rounds-selector">
               <button class="rounds-btn" onclick="changeRounds(-1)">−</button>
@@ -100,6 +122,9 @@
         <div class="video-container">
           <div class="audio-player-wrapper">
             <div id="youtube-player"></div>
+            <div id="spotify-player" class="spotify-player hidden">
+              <div id="spotify-embed"></div>
+            </div>
             <div class="audio-controls">
               <div class="audio-visual">
                 <span class="music-icon" id="music-icon">🎵</span>
@@ -133,17 +158,17 @@
             <input
               type="range"
               id="year-slider"
-              min="1925"
-              max="2025"
-              value="1975"
+              min="1960"
+              max="2024"
+              value="1990"
               class="year-slider"
             />
             <div class="year-display">
-              <span id="year-value">1975</span>
+              <span id="year-value">1990</span>
             </div>
             <div class="year-labels">
-              <span>1925</span>
-              <span>2025</span>
+              <span>1960</span>
+              <span>2024</span>
             </div>
           </div>
 
@@ -203,5 +228,6 @@
       var firstScriptTag = document.getElementsByTagName("script")[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     </script>
+    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
   </body>
 </html>

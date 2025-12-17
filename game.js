@@ -255,31 +255,17 @@ function loadSpotifyTrack(trackId) {
   spotifyPlaying = false;
   playPauseBtn.textContent = "▶️";
   musicIcon.classList.remove("playing");
-
-  // If controller exists, try to reuse it with loadUri (better for mobile)
-  if (spotifyController) {
-    console.log("Reusing existing Spotify controller");
-    audioStatus.textContent = "Tap ▶️ to play";
-    try {
-      spotifyController.loadUri(`spotify:track:${trackId}`);
-      // Don't auto-play on mobile - user must tap play button
-      // Enable the guess button since track is loaded
-      return;
-    } catch (e) {
-      console.log("Error reusing controller, will recreate:", e);
-      // Fall through to create new controller
-      try {
-        spotifyController.destroy();
-      } catch (e2) {
-        console.log("Error destroying controller:", e2);
-      }
-      spotifyController = null;
-    }
-  }
-
-  // Creating new controller - this happens on first track with user interaction
   audioStatus.textContent = "Loading...";
 
+  // If controller already exists, reuse it (critical for mobile autoplay)
+  if (spotifyController) {
+    console.log("Reusing existing Spotify controller for mobile compatibility");
+    spotifyController.loadUri(`spotify:track:${trackId}`);
+    // The playback_update listener will handle auto-play state
+    return;
+  }
+
+  // First time: create controller (user interaction from Start Game button allows autoplay)
   // Recreate the embed div (it gets replaced by the API)
   spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
   const spotifyEmbed = document.getElementById("spotify-embed");
@@ -301,13 +287,7 @@ function loadSpotifyTrack(trackId) {
       if (e.data.isPaused) {
         playPauseBtn.textContent = "▶️";
         musicIcon.classList.remove("playing");
-        if (spotifyPlaying) {
-          // Was playing, now paused
-          audioStatus.textContent = "Paused";
-        } else {
-          // Never started playing
-          audioStatus.textContent = "Tap ▶️ to play";
-        }
+        audioStatus.textContent = "Paused";
         spotifyPlaying = false;
       } else {
         playPauseBtn.textContent = "⏸️";
@@ -322,12 +302,12 @@ function loadSpotifyTrack(trackId) {
     });
 
     controller.addListener("ready", () => {
-      console.log("Spotify embed ready");
-      audioStatus.textContent = "Tap ▶️ to play";
-      // Try to auto-play (works on first track due to user interaction from clicking Start Game)
+      console.log("Spotify embed ready, starting playback...");
+      audioStatus.textContent = "Starting...";
+      // Auto-play after a short delay
       setTimeout(() => {
         controller.play();
-      }, 300);
+      }, 500);
     });
   };
 
@@ -714,13 +694,9 @@ function showRoundResults() {
 
   // Stop video/audio
   if (gameState.musicSource === "spotify") {
-    // Pause Spotify playback (don't destroy - keep for next round on mobile)
+    // Pause Spotify playback
     if (spotifyController) {
-      try {
-        spotifyController.pause();
-      } catch (e) {
-        console.log("Error pausing Spotify:", e);
-      }
+      spotifyController.pause();
     }
     spotifyPlaying = false;
   } else if (player && player.pauseVideo) {

@@ -251,21 +251,36 @@ function loadSpotifyTrack(trackId) {
     return;
   }
 
-  // Reset state
-  spotifyPlaying = false;
+  // Reset UI state
   playPauseBtn.textContent = "▶️";
   musicIcon.classList.remove("playing");
   audioStatus.textContent = "Loading...";
 
-  // Destroy existing controller if any
+  // If controller exists, try to reuse it with loadUri (better for mobile)
   if (spotifyController) {
+    console.log("Reusing existing Spotify controller");
+    spotifyPlaying = false;
     try {
-      spotifyController.destroy();
+      spotifyController.loadUri(`spotify:track:${trackId}`);
+      // Auto-play after a short delay
+      setTimeout(() => {
+        spotifyController.play();
+      }, 500);
+      return;
     } catch (e) {
-      console.log("Error destroying controller:", e);
+      console.log("Error reusing controller, will recreate:", e);
+      // Fall through to create new controller
+      try {
+        spotifyController.destroy();
+      } catch (e2) {
+        console.log("Error destroying controller:", e2);
+      }
+      spotifyController = null;
     }
-    spotifyController = null;
   }
+
+  // Reset state
+  spotifyPlaying = false;
 
   // Recreate the embed div (it gets replaced by the API)
   spotifyPlayer.innerHTML = '<div id="spotify-embed"></div>';
@@ -695,9 +710,13 @@ function showRoundResults() {
 
   // Stop video/audio
   if (gameState.musicSource === "spotify") {
-    // Pause Spotify playback
+    // Pause Spotify playback (don't destroy - keep for next round on mobile)
     if (spotifyController) {
-      spotifyController.pause();
+      try {
+        spotifyController.pause();
+      } catch (e) {
+        console.log("Error pausing Spotify:", e);
+      }
     }
     spotifyPlaying = false;
   } else if (player && player.pauseVideo) {
